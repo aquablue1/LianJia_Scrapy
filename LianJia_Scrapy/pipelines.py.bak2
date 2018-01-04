@@ -1,0 +1,57 @@
+# -*- coding: utf-8 -*-
+
+# Define your item pipelines here
+#
+# Don't forget to add your pipeline to the ITEM_PIPELINES setting
+# See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
+from twisted.enterprise import adbapi
+import MySQLdb
+import MySQLdb.cursors
+# import codecs
+import json
+from scrapy.crawler import Settings as settings
+import copy
+
+
+class lianjia_pipeline(object):
+
+    def __init__(self):
+        self.conn = MySQLdb.connect("localhost", "user1", "1212", "lianjia_house", charset='utf8', use_unicode=False)
+        self.cursor = self.conn.cursor()
+
+    def process_item(self, item, spider):
+
+        try:
+            self.cursor.execute("""insert into nanjing_statistics(house_id, house_title, price, total_area,
+                     "orientation, community_name, price_per_area) values(%s,%s,%s,%s,%s,%s,%s) """ ,
+                                (item['house_id'], item['house_title'], item['price'], item['total_area'],
+                                 item['orientation'], item['community_name'], item['price_per_area']))
+            self.conn.commit()
+        except(MySQLdb.Error):
+            print("Error")
+
+        return item
+
+
+
+    def _conditional_insert(self, tx, item):
+        sql_insert = "insert into nanjing_statistics(house_id, house_title, price, total_area, " \
+                     "orientation, community_name, price_per_area) values(%s,%s,%s,%s,%s,%s,%s) "
+        """     
+            house_id = scrapy.Field()           # 房屋ID
+            house_title = scrapy.Field()        # 房屋标题
+            price = scrapy.Field()              # 总售价
+            total_area = scrapy.Field()         # 总面积
+            orientation = scrapy.Field()        # 方向
+            community_name = scrapy.Field()     # 所在小区/社区
+            price_per_area = scrapy.Field()     # 每平米价格
+        """
+        params = (item["house_id"], item["house_title"], item["price"], item["total_area"],
+                  item["orientation"], item["community_name"], item["price_per_area"])
+        tx.execure(sql_insert, params)
+
+    def _handle_error(self, failure, item, spider):
+        print(failure)
+
+
+
