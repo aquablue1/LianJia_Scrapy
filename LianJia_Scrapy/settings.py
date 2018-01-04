@@ -88,3 +88,22 @@ ROBOTSTXT_OBEY = False
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+
+# enable http caching.
+HTTPCACHE_ENABLED = True
+HTTPCACHE_EXPIRATION_SECS = 0
+HTTPCACHE_DIR = 'httpcache'
+HTTPCACHE_IGNORE_HTTP_CODES = []
+HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+
+# MySQL information
+MYSQL_HOST = '127.0.0.1'
+MYSQL_DBNAME = 'lianjia_house'
+MYSQL_USER = 'user1'
+MYSQL_PWD = '1212'
+MYSQL_PORT = 3306
+ITEM_PIPELINES = {
+    'LianJia_Scrapy.pipelines.lianjia_pipeline': 300,
+}

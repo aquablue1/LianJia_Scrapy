@@ -4,8 +4,69 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
+from twisted.enterprise import adbapi
+import MySQLdb
+import MySQLdb.cursors
+# import codecs
+import json
+from scrapy.crawler import Settings as settings
+import copy
 
 
 class LianjiaScrapyPipeline(object):
     def process_item(self, item, spider):
         return item
+
+class lianjia_pipeline(object):
+
+    def __init__(self, dbpool):
+        self.dbpool = dbpool
+
+    @classmethod
+    def from_settings(cls, settings):
+        dbparams = dict(
+            host = settings['MYSQL_HOST'],
+            db = settings['MYSQL_DBNAME'],
+            user = settings['MYSQL_USER'],
+            passwd = settings['MYSQL_PWD'],
+            charset='utf8',
+            # cursorclass=MySQLdb.cursors.DictCursor,
+            use_unicode=False,
+        )
+        dbpool=adbapi.ConnectionPool('MySQLdb', **dbparams) # **表示将字典扩展为关键字参数,相当于host=xxx,db=yyy....
+        return cls(dbpool)
+
+    def process_item(self, item, spider):
+        asynItem = copy.deepcopy(item)
+        query = self.dbpool.runInteraction(self._conditional_insert, asynItem)
+        query.addErrback(self._handle_error, asynItem, spider)
+        return asynItem
+
+    def _conditional_insert(self, tx, item):
+        sql_insert = "insert into nanjing_statistics(house_id, house_title, price, total_area, " \
+                     "orientation, community_name, price_per_area) values(%s,%s,%s,%s,%s,%s,%s) "
+        """     
+            house_id = scrapy.Field()           # 房屋ID
+            house_title = scrapy.Field()        # 房屋标题
+            price = scrapy.Field()              # 总售价
+            total_area = scrapy.Field()         # 总面积
+            orientation = scrapy.Field()        # 方向
+            community_name = scrapy.Field()     # 所在小区/社区
+            price_per_area = scrapy.Field()     # 每平米价格
+        """
+        params = (item["house_id"], item["house_title"], item["price"], item["total_area"],
+                  item["orientation"], item["community_name"], item["price_per_area"])
+        tx.execure(sql_insert, params)
+
+    def _handle_error(self, failue, item, spider):
+        print(failue)
+
+
+
+
+
+
+
+
+
+

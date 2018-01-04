@@ -31,9 +31,41 @@ class LianJiaSpider(Spider):
     def parse(self, response):
         item = LianjiaScrapyItem()
         # house_info = response.xpath('//div[@class="introContent"]/div')
+        house_id = response.xpath('//div[@class="brokerInfoText fr"]/div[@class="brokerName"]')
+        house_header = response.xpath('//div[@class="title-wrapper"]/div[@class="content"]/div[@class="title"]')
+        house_overview = response.xpath('//div[@class="overview"]/div[@class="content"]')
+        house_main_content = response.xpath('//div[@class="introContent"]/div[@class="base"]/div[@class="content"]')
 
-        item['name'] = response.xpath('//div[@class="introContent"]/div[@class="base"]/div[@class="content"]/ul/li[1]/text()').extract()[0]
-        item['price'] = response.xpath('//div[@class="introContent"]/div[@class="base"]/div[@class="content"]/ul/li[2]/text()').extract()[0]
-        item['total_area'] = response.xpath('//div[@class="introContent"]/div[@class="base"]/div[@class="content"]/ul/li[3]/text()').extract()[0]
+        """     
+            house_id = scrapy.Field()           # 房屋ID
+            house_title = scrapy.Field()        # 房屋标题
+            price = scrapy.Field()              # 总售价
+            total_area = scrapy.Field()         # 总面积
+            orientation = scrapy.Field()        # 方向
+            community_name = scrapy.Field()     # 所在小区/社区
+            price_per_area = scrapy.Field()     # 每平米价格
+        """
+
+        item['house_id'] = house_id.xpath('//a/@data-source-extends').extract()[0]
+        print(item['house_id'])
+
+        item['house_title'] = house_header.xpath('//h1/text()').extract()[0]
+        print(item['house_title'])
+
+        # item['name'] = house_main_content.xpath('//ul/li[1]/text()').extract()[0]
+        item['price'] = house_overview.xpath('//div[@class="price "]/span/text()').extract()[0]
+        print(item['price'])
+
+        item['orientation'] = house_overview.xpath('//div[@class="houseInfo"]/div[@class="type"]/div[@class="mainInfo"]/text()').extract()[0]
+        print(item['orientation'])
+
+        item['total_area'] = house_overview.xpath('//div[@class="houseInfo"]/div[@class="area"]/div[@class="mainInfo"]/text()').extract()[0]
+        print(item['total_area'])
+
+        item['community_name'] = house_overview.xpath('//div[@class="aroundInfo"]/div[@class="communityName"]/a[@class="info "]/text()').extract()[0]
+        print(item['community_name'])
+
+        item['price_per_area'] = house_overview.xpath('//div[@class="price "]/div[@class="text"]/div[@class="unitPrice"]/span/text()').extract()[0]
+        print(item['price_per_area'])
 
         yield item

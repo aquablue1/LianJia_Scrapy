@@ -12,13 +12,12 @@ class LianjiaScrapyItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
 
-    # name of house
-    name = scrapy.Field()
-
-    # price of house
-    price = scrapy.Field()
-
-    # total area of ahouse
-    total_area = scrapy.Field()
+    house_id = scrapy.Field()           # 房屋ID
+    house_title = scrapy.Field()        # 房屋标题
+    price = scrapy.Field()              # 总售价
+    total_area = scrapy.Field()         # 总面积
+    orientation = scrapy.Field()        # 方向
+    community_name = scrapy.Field()     # 所在小区/社区
+    price_per_area = scrapy.Field()     # 每平米价格
 
     pass
