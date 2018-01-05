@@ -9,7 +9,6 @@ import MySQLdb
 from MySQLdb import cursors
 # import codecs
 import copy
-from scrapy.utils.project import get_project_settings
 
 
 class LianjiaScrapyPipeline(object):
@@ -18,29 +17,30 @@ class LianjiaScrapyPipeline(object):
 
 class lianjia_pipeline(object):
 
-    def __init__(self):
-        self.settings = get_project_settings()
-        self.settings["MYSQL_HOST"] = 'localhost'
-        self.db = MySQLdb.connect(host='127.0.0.1',
-                                  db='lianjia_house',
-                                  user='user1',
-                                  passwd='1212',
-                                  cursorclass=cursors.DictCursor,
-                                  charset='utf8',
-                                  use_unicode=False)
+    def __init__(self, dbpool):
+        self.dbpool = dbpool
 
+    @classmethod
+    def from_settings(cls, settings):
+        dbparams = dict(
+            host = settings['MYSQL_HOST'],
+            db = settings['MYSQL_DBNAME'],
+            user = settings['MYSQL_USER'],
+            passwd = settings['MYSQL_PWD'],
+            charset='utf8',
+            cursorclass=cursors.DictCursor,
+            use_unicode=False,
+        )
+        dbpool=adbapi.ConnectionPool('MySQLdb', **dbparams) # **表示将字典扩展为关键字参数,相当于host=xxx,db=yyy....
+        return cls(dbpool)
 
     def process_item(self, item, spider):
-        cursor = self.db.cursor()
+        asynItem = copy.deepcopy(item)
+        query = self.dbpool.runInteraction(self._conditional_insert, asynItem)
+        query.addErrback(self._handle_error, asynItem, spider)
+        return asynItem
 
-        status = self.conditional_insert(cursor, item)
-
-        # 输入完指令之后，一定要记得commit
-        self.db.commit()
-
-        return item
-
-    def conditional_insert(self, tx, item):
+    def _conditional_insert(self, tx, item):
         sql_insert = "insert into nanjing_statistics(house_id, house_title, price, total_area, " \
                      "orientation, community_name, price_per_area) values(%s,%s,%s,%s,%s,%s,%s) "
         """     
@@ -54,9 +54,17 @@ class lianjia_pipeline(object):
         """
         params = (item["house_id"], item["house_title"], item["price"], item["total_area"],
                   item["orientation"], item["community_name"], item["price_per_area"])
-        tx.execute(sql_insert, params)
-
-        return True
+        tx.execure(sql_insert, params)
 
     def _handle_error(self, failue, item, spider):
         print(failue)
+
+
+
+
+
+
+
+
+
+
