@@ -12,7 +12,7 @@ class LianjiaScrapyItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
 
-    ####################################################################################
+    ###################################################################################################
     ## House Identity
     house_id = scrapy.Field()           # 房屋ID
     house_title = scrapy.Field()        # 房屋标题
@@ -37,6 +37,7 @@ class LianjiaScrapyItem(scrapy.Item):
     is_elevator = scrapy.Field()                    # 配备电梯
     floor = scrapy.Field()                          # 所在楼层
     house_type = scrapy.Field()                     # 户型结构 (注意区分house_structure，房屋结构)
+    building_type = scrapy.Field()                  # 建筑类型
     building_structure = scrapy.Field()             # 建筑结构
     elevator_per_house = scrapy.Field()             # 梯户比例
     property_year = scrapy.Field()                  # 产权年限
@@ -50,6 +51,9 @@ class LianjiaScrapyItem(scrapy.Item):
     house_purpose = scrapy.Field()                  # 房屋用途
     property_ownership = scrapy.Field()             # 产权所属
     ownership_certificate = scrapy.Field()          # 房本备件
+
+    ##################################################################################################
+    ##################################################################################################
 
 
     pass

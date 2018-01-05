@@ -2,7 +2,7 @@ import scrapy
 from scrapy.spider import Spider
 from LianJia_Scrapy.items import LianjiaScrapyItem
 from scrapy import Request
-
+import ast
 
 
 class LianJiaSpider(Spider):
@@ -31,41 +31,170 @@ class LianJiaSpider(Spider):
     def parse(self, response):
         item = LianjiaScrapyItem()
         # house_info = response.xpath('//div[@class="introContent"]/div')
+
+        ## House identity location
         house_id = response.xpath('//div[@class="brokerInfoText fr"]/div[@class="brokerName"]')
         house_header = response.xpath('//div[@class="title-wrapper"]/div[@class="content"]/div[@class="title"]')
+
+        ## House overview information and price information location
         house_overview = response.xpath('//div[@class="overview"]/div[@class="content"]')
-        house_main_content = response.xpath('//div[@class="introContent"]/div[@class="base"]/div[@class="content"]')
+
+        ## House detailed information location
+        house_detailed_info = response.xpath('//div[@class="m-content"]//div[@class="introContent"]/div[@class="base"]'
+                                             '/div[@class="content"]/ul')
+        print(house_detailed_info.extract())
+
+        ## House trade information location
+        house_trade_info = response.xpath('//div[@class="m-content"]//div[@class="introContent"]/div[@class="transaction"]'
+                                          '/div[@class="content"]/ul')
+        print(house_trade_info.extract())
 
         """     
+            ## House Identity
             house_id = scrapy.Field()           # 房屋ID
             house_title = scrapy.Field()        # 房屋标题
+        
+            ## House price information
             price = scrapy.Field()              # 总售价
+            first_price = scrapy.Field()        # 最低首付
+            tax = scrapy.Field()                # 税费
+            price_per_area = scrapy.Field()     # 每平米价格
+        
+            ## House overview information
             total_area = scrapy.Field()         # 总面积
             orientation = scrapy.Field()        # 方向
+            house_structure = scrapy.Field()    # 房屋结构
             community_name = scrapy.Field()     # 所在小区/社区
-            price_per_area = scrapy.Field()     # 每平米价格
+            house_location = scrapy.Field()     # 房屋所在区域
+        
+            ## House detailed information
+            house_structure_detailed = scrapy.Field()       # 具体户型信息
+            inside_area = scrapy.Field()                    # 套内面积
+            declaration_status = scrapy.Field()             # 装修情况
+            is_elevator = scrapy.Field()                    # 配备电梯
+            floor = scrapy.Field()                          # 所在楼层
+            house_type = scrapy.Field()                     # 户型结构 (注意区分house_structure，房屋结构)
+            building_type = scrapy.Field()                  # 建筑类型
+            building_structure = scrapy.Field()             # 建筑结构
+            elevator_per_house = scrapy.Field()             # 梯户比例
+            property_year = scrapy.Field()                  # 产权年限
+        
+            ## House trade information
+            start_sale_date = scrapy.Field()                # 挂牌时间
+            last_sale_date = scrapy.Field()                 # 上次交易时间
+            trade_gap = scrapy.Field()                      # 房屋年限（据上次交易年限）
+            pledge_info = scrapy.Field()                    # 抵押信息
+            trade_ownership = scrapy.Field()                # 交易权限
+            house_purpose = scrapy.Field()                  # 房屋用途
+            property_ownership = scrapy.Field()             # 产权所属
+            ownership_certificate = scrapy.Field()          # 房本备件
         """
 
-        item['house_id'] = house_id.xpath('//a/@data-source-extends').extract()[0]
+        ## House identity extract =========================================================
+        # House ID is stored in a dict-liked string. therefore, convert the string to dict object first.
+        # and then extract the house id based on key='house_code'
+        house_id_dict = house_id.xpath('//a/@data-source-extends').extract()[0]
+        house_id_dict = ast.literal_eval(house_id_dict)
+        item['house_id'] = house_id_dict['house_code']
         print(item['house_id'])
 
         item['house_title'] = house_header.xpath('//h1/text()').extract()[0]
         print(item['house_title'])
 
-        # item['name'] = house_main_content.xpath('//ul/li[1]/text()').extract()[0]
+        ## House price information extract ================================================
         item['price'] = house_overview.xpath('//div[@class="price "]/span/text()').extract()[0]
         print(item['price'])
 
-        item['orientation'] = house_overview.xpath('//div[@class="houseInfo"]/div[@class="type"]/div[@class="mainInfo"]/text()').extract()[0]
-        print(item['orientation'])
+        item['first_price'] = house_overview.xpath('//div[@class="price "]/div[@class="text"]/div[@class="tax"]'
+                                                   '/span[@class="taxtext"]/span[1]/text()').extract()[0]
+        print(item['first_price'])
 
-        item['total_area'] = house_overview.xpath('//div[@class="houseInfo"]/div[@class="area"]/div[@class="mainInfo"]/text()').extract()[0]
-        print(item['total_area'])
+        item['tax'] = \
+        house_overview.xpath('//div[@class="price "]/div[@class="text"]/div[@class="tax"]/span[@class="taxtext"]'
+                             '//span[@id="PanelTax"]/text()').extract()[0]
+        print(item['tax'])
 
-        item['community_name'] = house_overview.xpath('//div[@class="aroundInfo"]/div[@class="communityName"]/a[@class="info "]/text()').extract()[0]
-        print(item['community_name'])
-
-        item['price_per_area'] = house_overview.xpath('//div[@class="price "]/div[@class="text"]/div[@class="unitPrice"]/span/text()').extract()[0]
+        item['price_per_area'] = \
+        house_overview.xpath('//div[@class="price "]/div[@class="text"]/div[@class="unitPrice"]/span/text()').extract()[
+            0]
         print(item['price_per_area'])
 
+        ## House overview information extract ============================================
+        item['total_area'] = \
+        house_overview.xpath('//div[@class="houseInfo"]/div[@class="area"]/div[@class="mainInfo"]/text()').extract()[0]
+        print(item['total_area'])
+
+        item['orientation'] = \
+        house_overview.xpath('//div[@class="houseInfo"]/div[@class="type"]/div[@class="mainInfo"]/text()').extract()[0]
+        print(item['orientation'])
+
+        item['house_structure'] = \
+        house_overview.xpath('//div[@class="houseInfo"]/div[@class="room"]/div[@class="mainInfo"]/text()').extract()[0]
+        print(item['house_structure'])
+
+        item['community_name'] = house_overview.xpath(
+            '//div[@class="aroundInfo"]/div[@class="communityName"]/a[@class="info "]/text()').extract()[0]
+        print(item['community_name'])
+
+        item['house_location'] = house_overview.xpath(
+            '//div[@class="aroundInfo"]/div[@class="areaName"]/a[@class="supplement"]/text()').extract()[0]
+        print(item['house_location'])
+
+        ## House detailed information ======================================================
+        item['house_structure_detailed'] = house_detailed_info.xpath('.//li[1]/text()').extract()[0]
+        print(item['house_structure_detailed'])
+
+        item['inside_area'] = house_detailed_info.xpath('.//li[5]/text()').extract()[0]
+        print(item['inside_area'])
+
+        item['declaration_status'] = house_detailed_info.xpath('.//li[9]/text()').extract()[0]
+        print(item['declaration_status'])
+
+        item['is_elevator'] = house_detailed_info.xpath('.//li[11]/text()').extract()[0]
+        print(item['is_elevator'])
+
+        item['floor'] = house_detailed_info.xpath('.//li[2]/text()').extract()[0]
+        print(item['floor'])
+
+        item['house_type'] = house_detailed_info.xpath('.//li[4]/text()').extract()[0]
+        print(item['house_type'])
+
+        item['building_type'] = house_detailed_info.xpath('.//li[6]/text()').extract()[0]
+        print(item['building_type'])
+
+        item['building_structure'] = house_detailed_info.xpath('.//li[8]/text()').extract()[0]
+        print(item['building_structure'])
+
+        item['elevator_per_house'] = house_detailed_info.xpath('.//li[10]/text()').extract()[0]
+        print(item['elevator_per_house'])
+
+        item['property_year'] = house_detailed_info.xpath('.//li[12]/text()').extract()[0]
+        print(item['property_year'])
+
+        ## House trade information =========================================================
+        item['start_sale_date'] = house_trade_info.xpath('.//li[1]/text()').extract()[0]
+        print(item['start_sale_date'])
+
+        item['last_sale_date'] = house_trade_info.xpath('.//li[3]/text()').extract()[0]
+        print(item['last_sale_date'])
+
+        item['trade_gap'] = house_trade_info.xpath('.//li[5]/text()').extract()[0]
+        print(item['trade_gap'])
+
+        item['pledge_info'] = house_trade_info.xpath('.//li[7]/span[2]/text()').extract()[0]
+        print(item['pledge_info'])
+
+        item['trade_ownership'] = house_trade_info.xpath('.//li[2]/text()').extract()[0]
+        print(item['trade_ownership'])
+
+        item['house_purpose'] = house_trade_info.xpath('.//li[4]/text()').extract()[0]
+        print(item['house_purpose'])
+
+        item['property_ownership'] = house_trade_info.xpath('.//li[6]/text()').extract()[0]
+        print(item['property_ownership'])
+
+        item['ownership_certificate'] = house_trade_info.xpath('.//li[8]/text()').extract()[0]
+        print(item['ownership_certificate'])
+
         yield item
+

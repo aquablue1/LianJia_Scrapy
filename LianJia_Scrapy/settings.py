@@ -104,6 +104,11 @@ MYSQL_DBNAME = 'lianjia_house'
 MYSQL_USER = 'user1'
 MYSQL_PWD = '1212'
 MYSQL_PORT = 3306
+
+"""
+
 ITEM_PIPELINES = {
     'LianJia_Scrapy.pipelines.lianjia_pipeline': 300,
 }
+
+"""
