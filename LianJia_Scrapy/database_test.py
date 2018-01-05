@@ -11,7 +11,7 @@ python27环境下使用
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
-但在python36下，reload()被取消，无法进行累死操作。
+但在python36下，reload()被取消，无法进行类似操作。
 """
 
 dbparams = dict(
@@ -36,9 +36,11 @@ cursor = db.cursor()
 
 view_all = "SELECT * FROM nanjing_statistics"
 
-sql = "insert into nanjing_statistics values (003, '又一个好地方啊!', 180, 100, '东南', '天河小区', 18000)"
+sql = "insert into nanjing_statistics values (009, '又一个好地方啊!', 180, 100, '东南', '天河小区', 18000)"
 
 cursor.execute(sql)
+
+db.commit()
 
 data = cursor.fetchall()
 
@@ -53,7 +55,7 @@ for row in data:
     community_name = row[5]
     price_per_area = row[6]
 
-    print("DATABASE Version: %s, %s, %s, %s, %s, %s, %s" %
+    print("DATABASE Version: %d, %s, %s, %s, %s, %s, %d" %
           (house_id.decode('utf8'), house_title.decode('utf8'), price, total_area, orientation, community_name, price_per_area))
 
 db.close()

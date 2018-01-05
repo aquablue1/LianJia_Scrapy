@@ -19,8 +19,9 @@ class LianjiaScrapyPipeline(object):
 class lianjia_pipeline(object):
 
     def __init__(self):
-        self.settings = get_project_settings()
-        self.settings["MYSQL_HOST"] = 'localhost'
+        # Methods_1: use the database info defined in settings file.
+        # self.settings = get_project_settings()
+        # self.settings["MYSQL_HOST"] = 'localhost'
         self.db = MySQLdb.connect(host='127.0.0.1',
                                   db='lianjia_house',
                                   user='user1',
@@ -28,7 +29,6 @@ class lianjia_pipeline(object):
                                   cursorclass=cursors.DictCursor,
                                   charset='utf8',
                                   use_unicode=False)
-
 
     def process_item(self, item, spider):
         cursor = self.db.cursor()
@@ -41,8 +41,28 @@ class lianjia_pipeline(object):
         return item
 
     def conditional_insert(self, tx, item):
-        sql_insert = "insert into nanjing_statistics(house_id, house_title, price, total_area, " \
-                     "orientation, community_name, price_per_area) values(%s,%s,%s,%s,%s,%s,%s) "
+        """
+
+        :param tx:
+        :param item:
+        :return:
+        """
+        sql_insert = "insert into nanjing_statistics(" \
+                     "house_id, house_title, " \
+                     "price, first_price, tax, price_per_area, " \
+                     "total_area, orientation, house_structure, community_name, house_location, " \
+                     "house_structure_detailed, inside_area, declaration_status, is_elevator, floor, house_type, " \
+                     "building_type, building_structure, elevator_per_house, property_year, " \
+                     "start_sale_date, last_sale_date, trade_gap, pledge_info, trade_ownership, house_purpose, " \
+                     "property_ownership, ownership_certificate) values(" \
+                     "%s, %s, " \
+                     "%s, %s, %s, %s, " \
+                     "%s, %s, %s, %s, %s," \
+                     "%s, %s, %s, %s, %s, %s, " \
+                     "%s, %s, %s, %s, " \
+                     "%s, %s, %s, %s, %s, %s, " \
+                     "%s, %s) "
+
         """     
             house_id = scrapy.Field()           # 房屋ID
             house_title = scrapy.Field()        # 房屋标题
@@ -52,8 +72,16 @@ class lianjia_pipeline(object):
             community_name = scrapy.Field()     # 所在小区/社区
             price_per_area = scrapy.Field()     # 每平米价格
         """
-        params = (item["house_id"], item["house_title"], item["price"], item["total_area"],
-                  item["orientation"], item["community_name"], item["price_per_area"])
+        params = (item["house_id"], item["house_title"],
+                  item["price"], item['first_price'], item["tax"], item["price_per_area"],
+                  item['total_area'], item["orientation"], item['house_structure'], item["community_name"],item['house_location'],
+                  item['house_structure_detailed'], item['inside_area'], item['declaration_status'], item['is_elevator'],
+                  item['floor'], item['house_type'],
+                  item['building_type'], item['building_structure'], item['elevator_per_house'], item['property_year'],
+                  item['start_sale_date'],item['last_sale_date'], item['trade_gap'], item['pledge_info'],
+                  item['trade_ownership'], item['house_purpose'],
+                  item['property_ownership'], item['ownership_certificate'])
+
         tx.execute(sql_insert, params)
 
         return True
