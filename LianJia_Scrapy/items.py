@@ -52,6 +52,10 @@ class LianjiaScrapyItem(scrapy.Item):
     property_ownership = scrapy.Field()             # 产权所属
     ownership_certificate = scrapy.Field()          # 房本备件
 
+    # House sale information
+    num_follow = scrapy.Field()                     # 累计关注人数
+    num_visit = scrapy.Field()                    # 累计看房人数
+
     ##################################################################################################
     ##################################################################################################
 

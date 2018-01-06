@@ -25,11 +25,16 @@ class LianJiaSpider(Spider):
 
     # Set root url and headers
     def start_requests(self):
-        url = 'https://nj.lianjia.com/ershoufang/103101077336.html'
+        url = 'https://nj.lianjia.com/ershoufang/103102039101.html'
         yield Request(url, headers=self.headers)
 
     # Do scrapy.
     def parse(self, response):
+        print(response)
+        response.extract()
+        # yield self.parse_each_house(response)
+
+    def parse_each_house(self, response):
         item = LianjiaScrapyItem()
         # house_info = response.xpath('//div[@class="introContent"]/div')
 
@@ -41,33 +46,36 @@ class LianJiaSpider(Spider):
         house_overview = response.xpath('//div[@class="overview"]/div[@class="content"]')
 
         ## House detailed information location
-        house_detailed_info = response.xpath('//div[@class="m-content"]//div[@class="introContent"]/div[@class="base"]'
-                                             '/div[@class="content"]/ul')
+        house_detailed_info = response.xpath(
+            '//div[@class="m-content"]//div[@class="introContent"]/div[@class="base"]/div[@class="content"]/ul')
         # print(house_detailed_info.extract())
 
         ## House trade information location
-        house_trade_info = response.xpath('//div[@class="m-content"]//div[@class="introContent"]/div[@class="transaction"]'
-                                          '/div[@class="content"]/ul')
+        house_trade_info = response.xpath(
+            '//div[@class="m-content"]//div[@class="introContent"]/div[@class="transaction"]/div[@class="content"]/ul')
         # print(house_trade_info.extract())
+
+        ## House sale information(followed and visited so far) location
+        house_sale_info = response.xpath('//div[@class="btnContainer "]/div')
 
         """     
             ## House Identity
             house_id = scrapy.Field()           # 房屋ID
             house_title = scrapy.Field()        # 房屋标题
-        
+
             ## House price information
             price = scrapy.Field()              # 总售价
             first_price = scrapy.Field()        # 最低首付
             tax = scrapy.Field()                # 税费
             price_per_area = scrapy.Field()     # 每平米价格
-        
+
             ## House overview information
             total_area = scrapy.Field()         # 总面积
             orientation = scrapy.Field()        # 方向
             house_structure = scrapy.Field()    # 房屋结构
             community_name = scrapy.Field()     # 所在小区/社区
             house_location = scrapy.Field()     # 房屋所在区域
-        
+
             ## House detailed information
             house_structure_detailed = scrapy.Field()       # 具体户型信息
             inside_area = scrapy.Field()                    # 套内面积
@@ -79,7 +87,7 @@ class LianJiaSpider(Spider):
             building_structure = scrapy.Field()             # 建筑结构
             elevator_per_house = scrapy.Field()             # 梯户比例
             property_year = scrapy.Field()                  # 产权年限
-        
+
             ## House trade information
             start_sale_date = scrapy.Field()                # 挂牌时间
             last_sale_date = scrapy.Field()                 # 上次交易时间
@@ -95,61 +103,78 @@ class LianJiaSpider(Spider):
         # House ID is stored in a dict-liked string. therefore, convert the string to dict object first.
         # and then extract the house id based on key='house_code'
 
-        house_id_dict = house_id.xpath('//a/@data-source-extends').extract()[0]
+        house_id_dict = house_id.xpath('.//a/@data-source-extends').extract()[0]
         house_id_dict = ast.literal_eval(house_id_dict)
         item['house_id'] = house_id_dict['house_code']
 
-        item['house_title'] = house_header.xpath('//h1/text()').extract()[0]
+        item['house_title'] = house_header.xpath('.//h1/text()').extract()[0]
 
+        """
         print(item['house_id'])
         print(item['house_title'])
+        """
 
         ## House price information extract ================================================
-        item['price'] = float(house_overview.xpath('//div[@class="price "]/span/text()').extract()[0])
+        item['price'] = float(house_overview.xpath('.//div[@class="price "]/span/text()').extract()[0])
 
         first_price_str = house_overview.xpath(
-            '//div[@class="price "]/div[@class="text"]/div[@class="tax"]/span[@class="taxtext"]/span[1]/text()').extract()[0]
-        item['first_price'] = float(re.findall('\d+', first_price_str)[0])
+            './/div[@class="price "]/div[@class="text"]/div[@class="tax"]/span[@class="taxtext"]/span[1]/text()').extract()[
+            0]
+        if (re.findall('\d+', first_price_str) is not []):
+            item['first_price'] = float(re.findall('\d+', first_price_str)[0])
+        else:
+            item['first_price'] = float(0)
 
         item['tax'] = float(house_overview.xpath(
-            '//div[@class="price "]/div[@class="text"]/div[@class="tax"]/span[@class="taxtext"]//span[@id="PanelTax"]/text()').extract()[0])
+            './/div[@class="price "]/div[@class="text"]/div[@class="tax"]/span[@class="taxtext"]/span[3]/span[@id="PanelTax"]/text()').extract()[
+                                0])
 
         item['price_per_area'] = float(house_overview.xpath(
-            '//div[@class="price "]/div[@class="text"]/div[@class="unitPrice"]/span/text()').extract()[0])
+            './/div[@class="price "]/div[@class="text"]/div[@class="unitPrice"]/span/text()').extract()[0])
 
+        """
         print(item['price'])
         print(item['first_price'])
         print(item['tax'])
         print(item['price_per_area'])
+        """
 
         ## House overview information extract ============================================
         total_area_str = house_overview.xpath(
-            '//div[@class="houseInfo"]/div[@class="area"]/div[@class="mainInfo"]/text()').extract()[0]
-        item['total_area'] = float(re.findall('\d+', total_area_str)[0])
+            './/div[@class="houseInfo"]/div[@class="area"]/div[@class="mainInfo"]/text()').extract()[0]
+        if (re.findall('\d+', total_area_str) is not []):
+            item['total_area'] = float(re.findall('\d+', total_area_str)[0])
+        else:
+            item['total_area'] = float(0)
 
         item['orientation'] = house_overview.xpath(
-            '//div[@class="houseInfo"]/div[@class="type"]/div[@class="mainInfo"]/text()').extract()[0]
+            './/div[@class="houseInfo"]/div[@class="type"]/div[@class="mainInfo"]/text()').extract()[0]
 
         item['house_structure'] = house_overview.xpath(
-            '//div[@class="houseInfo"]/div[@class="room"]/div[@class="mainInfo"]/text()').extract()[0]
+            './/div[@class="houseInfo"]/div[@class="room"]/div[@class="mainInfo"]/text()').extract()[0]
 
         item['community_name'] = house_overview.xpath(
-            '//div[@class="aroundInfo"]/div[@class="communityName"]/a[@class="info "]/text()').extract()[0]
+            './/div[@class="aroundInfo"]/div[@class="communityName"]/a[@class="info "]/text()').extract()[0]
 
         item['house_location'] = house_overview.xpath(
-            '//div[@class="aroundInfo"]/div[@class="areaName"]/a[@class="supplement"]/text()').extract()[0]
+            './/div[@class="aroundInfo"]/div[@class="areaName"]/a[@class="supplement"]/text()').extract()[0]
 
+        """
         print(item['total_area'])
         print(item['orientation'])
         print(item['house_structure'])
         print(item['community_name'])
         print(item['house_location'])
+        """
 
         ## House detailed information ======================================================
         item['house_structure_detailed'] = house_detailed_info.xpath('.//li[1]/text()').extract()[0]
 
         inside_area_str = house_detailed_info.xpath('.//li[5]/text()').extract()[0]
-        item['inside_area'] = float(re.findall('\d+', inside_area_str)[0])
+        if (len(re.findall('\d+', inside_area_str)) > 0):
+            item['inside_area'] = float(re.findall('\d+', inside_area_str)[0])
+        else:
+            item['inside_area'] = float(0)
 
         item['declaration_status'] = house_detailed_info.xpath('.//li[9]/text()').extract()[0]
 
@@ -167,6 +192,7 @@ class LianJiaSpider(Spider):
 
         item['property_year'] = house_detailed_info.xpath('.//li[12]/text()').extract()[0]
 
+        """
         print(item['house_structure_detailed'])
         print(item['inside_area'])
         print(item['declaration_status'])
@@ -177,11 +203,16 @@ class LianJiaSpider(Spider):
         print(item['building_structure'])
         print(item['elevator_per_house'])
         print(item['property_year'])
+        """
 
         ## House trade information =========================================================
         item['start_sale_date'] = house_trade_info.xpath('.//li[1]/text()').extract()[0]
+        if '-' not in item['start_sale_date']:
+            item['start_sale_date'] = 0
 
         item['last_sale_date'] = house_trade_info.xpath('.//li[3]/text()').extract()[0]
+        if '-' not in item['last_sale_date']:
+            item['last_sale_date'] = None
 
         item['trade_gap'] = house_trade_info.xpath('.//li[5]/text()').extract()[0]
 
@@ -195,6 +226,7 @@ class LianJiaSpider(Spider):
 
         item['ownership_certificate'] = house_trade_info.xpath('.//li[8]/text()').extract()[0]
 
+        """
         print(item['start_sale_date'])
         print(item['last_sale_date'])
         print(item['trade_gap'])
@@ -203,7 +235,17 @@ class LianJiaSpider(Spider):
         print(item['house_purpose'])
         print(item['property_ownership'])
         print(item['ownership_certificate'])
+        """
 
+        item['num_follow'] = house_sale_info.xpath('.//span[@id="favCount"]/text()').extract()[0]
 
-        yield item
+        item['num_visit'] = house_sale_info.xpath('.//span[@id="cartCount"]/text()').extract()[0]
+
+        """
+        print(item['num_follow'])
+        print(item['num_visit'])
+        """
+
+        return item
+
 

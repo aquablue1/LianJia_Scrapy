@@ -38,6 +38,8 @@ view_all = "SELECT * FROM nanjing_statistics"
 
 sql = "insert into nanjing_statistics values (009, '又一个好地方啊!', 180, 100, '东南', '天河小区', 18000)"
 
+sql = "insert into nanjing_house_urls (url) values ('https://docs.python.org/3/tutorial/errors.html')"
+
 cursor.execute(sql)
 
 db.commit()

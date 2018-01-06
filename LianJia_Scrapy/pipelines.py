@@ -82,7 +82,12 @@ class lianjia_pipeline(object):
                   item['trade_ownership'], item['house_purpose'],
                   item['property_ownership'], item['ownership_certificate'])
 
-        tx.execute(sql_insert, params)
+        try:
+            tx.execute(sql_insert, params)
+
+        except  MySQLdb.IntegrityError:
+            print("Duplicated KEY VALUE error!")
+            return False
 
         return True
 
